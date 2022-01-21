@@ -1,11 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"sort"
 	"strconv"
 )
 
-func GetPossibilities(fieldValue byte, fieldCount int) [][]int {
+func GetPossibilities(fieldValue int, fieldCount int, knownCombinations map[string][][]int) [][]int {
 	var possibilities [][]int
 	if fieldCount < 2 {
 		return possibilities
@@ -14,21 +15,32 @@ func GetPossibilities(fieldValue byte, fieldCount int) [][]int {
 	if fieldCount == 2 {
 		return getTwoFieldPossibility(fieldValue)
 	}
+
 	var checkedPossibilities = map[string]bool{}
 	for j := 1; j < 10; j++ {
-		p2 := GetPossibilities(byte(int(fieldValue)-j), fieldCount-1)
-		for _, v := range p2 {
-			if !contains(v, j) {
-				v = append(v, j)
-				sort.Ints(v)
-				var key string
-				for _, w := range v {
-					key = key + strconv.Itoa(w)
-				}
-				if !checkedPossibilities[key] {
-					checkedPossibilities[key] = true
-					possibilities = append(possibilities, v)
-				}
+		combinationKey := fmt.Sprintf("%d;%d", int(fieldValue)-j, fieldCount-1)
+		val, ok := knownCombinations[combinationKey]
+		if !ok {
+			val = GetPossibilities(fieldValue-j, fieldCount-1, knownCombinations)
+			knownCombinations[combinationKey] = val
+		}
+		for _, v := range val {
+			if sum(v)+j != fieldValue {
+				continue
+			}
+			if contains(v, j) {
+				continue
+			}
+
+			v = append(v, j)
+			sort.Ints(v)
+			var key string
+			for _, w := range v {
+				key = key + strconv.Itoa(w)
+			}
+			if !checkedPossibilities[key] {
+				checkedPossibilities[key] = true
+				possibilities = append(possibilities, v)
 			}
 		}
 	}
@@ -39,6 +51,15 @@ func GetPossibilities(fieldValue byte, fieldCount int) [][]int {
 
 	return possibilities
 }
+
+func sum(array []int) int {
+	result := 0
+	for _, v := range array {
+		result += v
+	}
+	return result
+}
+
 func contains(s []int, e int) bool {
 	for _, a := range s {
 		if a == e {
@@ -47,13 +68,13 @@ func contains(s []int, e int) bool {
 	}
 	return false
 }
-func getTwoFieldPossibility(fieldValue byte) (possibilities [][]int) {
-	possibilities = [][]int{}
+func getTwoFieldPossibility(fieldValue int) [][]int {
+	var possibilities [][]int
 	var checkedPossibilities = map[string]bool{}
 	for i := 1; i < 10; i++ {
 		for j := 1; j < 10; j++ {
 			if i != j {
-				if i+j == int(fieldValue) {
+				if i+j == fieldValue {
 					possibility := []int{i, j}
 					sort.Ints(possibility)
 					var key string

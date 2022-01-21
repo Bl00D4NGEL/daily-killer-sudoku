@@ -1,6 +1,9 @@
 package main
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
 
 type TestSet struct {
 	value        int
@@ -66,9 +69,11 @@ func TestGetPossibilities(t *testing.T) {
 		fieldCount:   9,
 		expectations: [][]int{{1, 2, 3, 4, 5, 6, 7, 8, 9}},
 	})
+	var knownPossibilities = make(map[string][][]int)
 
 	for _, testSet := range testSets {
-		possibilities := GetPossibilities(byte(testSet.value), testSet.fieldCount)
+		possibilities := GetPossibilities(testSet.value, testSet.fieldCount, knownPossibilities)
+		fmt.Println(knownPossibilities)
 		if len(possibilities) != len(testSet.expectations) {
 			t.Errorf("Expected possibilities to be %d instead got %d.", len(testSet.expectations), len(possibilities))
 			t.Error(testSet.expectations, possibilities)
@@ -85,14 +90,6 @@ func TestGetPossibilities(t *testing.T) {
 		}
 
 	}
-}
-
-func sum(array []int) int {
-	result := 0
-	for _, v := range array {
-		result += v
-	}
-	return result
 }
 
 func equal(a, b []int) bool {
