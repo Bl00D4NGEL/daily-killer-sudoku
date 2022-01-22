@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -13,6 +12,18 @@ type TestSet struct {
 
 func TestGetPossibilities(t *testing.T) {
 	var testSets []TestSet
+
+	testSets = append(testSets, TestSet{
+		value:        3,
+		fieldCount:   1,
+		expectations: [][]int{{3}},
+	})
+
+	testSets = append(testSets, TestSet{
+		value:        0,
+		fieldCount:   1,
+		expectations: [][]int{},
+	})
 
 	testSets = append(testSets, TestSet{
 		value:        3,
@@ -73,14 +84,13 @@ func TestGetPossibilities(t *testing.T) {
 
 	for _, testSet := range testSets {
 		possibilities := GetPossibilities(testSet.value, testSet.fieldCount, knownPossibilities)
-		fmt.Println(knownPossibilities)
-		if len(possibilities) != len(testSet.expectations) {
-			t.Errorf("Expected possibilities to be %d instead got %d.", len(testSet.expectations), len(possibilities))
+		if len(possibilities.combinations) != len(testSet.expectations) {
+			t.Errorf("Expected possibilities to be %d instead got %d.", len(testSet.expectations), len(possibilities.combinations))
 			t.Error(testSet.expectations, possibilities)
 			return
 		}
 
-		for i, p := range possibilities {
+		for i, p := range possibilities.combinations {
 			if !equal(p, testSet.expectations[i]) {
 				t.Error("Possibilities don't match expectations", p, testSet.expectations[i])
 			}

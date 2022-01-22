@@ -6,14 +6,28 @@ import (
 	"strconv"
 )
 
-func GetPossibilities(fieldValue int, fieldCount int, knownCombinations map[string][][]int) [][]int {
-	var possibilities [][]int
-	if fieldCount < 2 {
+type Possibilities struct {
+	value        int
+	fieldCount   int
+	combinations [][]int
+}
+
+func GetPossibilities(fieldValue int, fieldCount int, knownCombinations map[string][][]int) Possibilities {
+	possibilities := Possibilities{
+		value:      fieldValue,
+		fieldCount: fieldCount,
+	}
+
+	if fieldCount < 1 || fieldValue < 1 {
 		return possibilities
 	}
 
+	if fieldCount == 1 {
+		possibilities.combinations = [][]int{{fieldValue}}
+	}
+
 	if fieldCount == 2 {
-		return getTwoFieldPossibility(fieldValue)
+		return getTwoFieldPossibilities(fieldValue)
 	}
 
 	var checkedPossibilities = map[string]bool{}
@@ -21,7 +35,7 @@ func GetPossibilities(fieldValue int, fieldCount int, knownCombinations map[stri
 		combinationKey := fmt.Sprintf("%d;%d", int(fieldValue)-j, fieldCount-1)
 		val, ok := knownCombinations[combinationKey]
 		if !ok {
-			val = GetPossibilities(fieldValue-j, fieldCount-1, knownCombinations)
+			val = GetPossibilities(fieldValue-j, fieldCount-1, knownCombinations).combinations
 			knownCombinations[combinationKey] = val
 		}
 		for _, v := range val {
@@ -33,23 +47,29 @@ func GetPossibilities(fieldValue int, fieldCount int, knownCombinations map[stri
 			}
 
 			v = append(v, j)
-			sort.Ints(v)
-			var key string
-			for _, w := range v {
-				key = key + strconv.Itoa(w)
-			}
+			key := generateCombinationKey(v)
 			if !checkedPossibilities[key] {
 				checkedPossibilities[key] = true
-				possibilities = append(possibilities, v)
+				possibilities.combinations = append(possibilities.combinations, v)
 			}
 		}
 	}
 
-	for _, v := range possibilities {
+	for _, v := range possibilities.combinations {
 		sort.Ints(v)
 	}
 
 	return possibilities
+}
+
+func generateCombinationKey(possibilities []int) string {
+	sort.Ints(possibilities)
+	var key string
+	for _, w := range possibilities {
+		key = key + strconv.Itoa(w)
+	}
+
+	return key
 }
 
 func sum(array []int) int {
@@ -68,25 +88,29 @@ func contains(s []int, e int) bool {
 	}
 	return false
 }
-func getTwoFieldPossibility(fieldValue int) [][]int {
-	var possibilities [][]int
+
+func getTwoFieldPossibilities(fieldValue int) Possibilities {
+	possibilities := Possibilities{
+		value:      fieldValue,
+		fieldCount: 2,
+	}
 	var checkedPossibilities = map[string]bool{}
 	for i := 1; i < 10; i++ {
 		for j := 1; j < 10; j++ {
-			if i != j {
-				if i+j == fieldValue {
-					possibility := []int{i, j}
-					sort.Ints(possibility)
-					var key string
-					for _, v := range possibility {
-						key = key + strconv.Itoa(v)
-					}
+			if i == j {
+				continue
+			}
 
-					if !checkedPossibilities[key] {
-						checkedPossibilities[key] = true
-						possibilities = append(possibilities, possibility)
-					}
-				}
+			if i+j != fieldValue {
+				continue
+			}
+
+			possibility := []int{i, j}
+			key := generateCombinationKey(possibility)
+
+			if !checkedPossibilities[key] {
+				checkedPossibilities[key] = true
+				possibilities.combinations = append(possibilities.combinations, possibility)
 			}
 		}
 	}
